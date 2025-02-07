@@ -5,6 +5,9 @@
 // WiFi Configuration
 const char* ssid = "xxxxxxxxxx";
 const char* password = "xxxxxx";
+const int maxValues = 10;
+float redValues[maxValues];
+int counterValues = 0;
 
 // MQTT Configuration
 const char* mqtt_server = "broker.mqtt-dashboard.com";
@@ -30,9 +33,9 @@ void setup() {
   Serial.begin(115200);
 
   // WiFi connection
-  setup_wifi();
+  //setup_wifi();
   // Configurazione MQTT
-  client.setServer(mqtt_server, mqtt_port);
+  //client.setServer(mqtt_server, mqtt_port);
 
   // Inizializzazione DHT11
   dht.begin();
@@ -73,21 +76,47 @@ void reconnect() {
 
 void loop() {
   if (!client.connected()) {
-    reconnect();
+    //reconnect();
   }
-  client.loop();
+  //client.loop();
   // Read data from the light sensor
   float h = dht.readHumidity();
-  float t = dht.readTemperature();
-  float l = analogRead(LIGHTSENSOR);
+  float value = dht.readTemperature();
+  //float l = analogRead(LIGHTSENSOR);
+
+
+  redValues[counterValues%10] = value;
+  counterValues = counterValues + 1;
+
+  float sum = 0;
+  float avg = 0;
+  if (counterValues < maxValues) {
+    //fino a counter
+    for (int k = 0; k < counterValues; k = k + 1) {
+      sum = sum + redValues[k];
+    }
+    avg = sum/counterValues;
+  }else{
+    for (int k = 0; k < maxValues; k = k + 1) {
+      sum = sum + redValues[k];
+    }
+    avg = sum / maxValues;
+  }
+
+
+  
+  Serial.println("Temperatura rilevata: " + String(value));
+  Serial.println("Temperatura media: " + String(avg));
+
+  delay(2000);
 
   // Validate sensor reading
-  if (isnan(h) || isnan(t) || isnan(l)) {
+  /* if (isnan(h) || isnan(t) || isnan(l)) {
     Serial.println("Sensor reading error");
     return;
-  }
+  } */
   // Publish data to MQTT
-  char tempStr[8];
+  /* char tempStr[8];
   dtostrf(t, 1, 2, tempStr);
   client.publish(mqtt_topic_temp, tempStr);
   char humStr[8];
@@ -101,7 +130,7 @@ void loop() {
   Serial.print(" °C, Humidity: ");
   Serial.print(humStr);
   Serial.print(" % Light: ");
-  Serial.println(lightStr);
+  Serial.println(lightStr); */
 
   // Wait for a second before next reading
   delay(1000);
