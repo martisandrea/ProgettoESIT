@@ -6,8 +6,14 @@
 const char* ssid = "xxxxxxxxxx";
 const char* password = "xxxxxx";
 const int maxValues = 10;
-float redValues[maxValues];
+float temperValues[maxValues];
+float humValues[maxValues];
 int counterValues = 0;
+
+float sumT = 0;
+float avgT = 0;
+float sumH = 0;
+float avgH = 0;
 
 // MQTT Configuration
 const char* mqtt_server = "broker.mqtt-dashboard.com";
@@ -80,33 +86,33 @@ void loop() {
   }
   //client.loop();
   // Read data from the light sensor
-  float h = dht.readHumidity();
-  float value = dht.readTemperature();
+  float humValue = dht.readHumidity();
+  float temValue = dht.readTemperature();
   //float l = analogRead(LIGHTSENSOR);
+  
+  sumH = sumH - humValues[counterValues % 10];
+  humValues[counterValues % 10] = humValue;
+  sumH = sumH + humValue;
 
+  sumT = sumT - temperValues[counterValues % 10];
+  temperValues[counterValues % 10] = temValue;
+  sumT = sumT + temValue;
 
-  redValues[counterValues%10] = value;
-  counterValues = counterValues + 1;
-
-  float sum = 0;
-  float avg = 0;
   if (counterValues < maxValues) {
-    //fino a counter
-    for (int k = 0; k < counterValues; k = k + 1) {
-      sum = sum + redValues[k];
-    }
-    avg = sum/counterValues;
-  }else{
-    for (int k = 0; k < maxValues; k = k + 1) {
-      sum = sum + redValues[k];
-    }
-    avg = sum / maxValues;
+    avgT = sumT / counterValues;
+    avgH = sumH / counterValues;
+  } else {
+    avgT = sumT / maxValues;
+    avgH = sumH / maxValues;
   }
 
+  counterValues = counterValues + 1;
 
-  
-  Serial.println("Temperatura rilevata: " + String(value));
-  Serial.println("Temperatura media: " + String(avg));
+
+  Serial.println("Read Temperature: " + String(temValue));
+  Serial.println("Average Temperature: " + String(avgT));
+  Serial.println("Read Humidity: " + String(humValue));
+  Serial.println("Average Humidity: " + String(avgH));
 
   delay(2000);
 
