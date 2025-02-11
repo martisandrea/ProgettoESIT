@@ -44,6 +44,7 @@ void setup() {
   //client.setServer(mqtt_server, mqtt_port);
 
   // Inizializzazione DHT11
+
   dht.begin();
 }
 
@@ -89,7 +90,7 @@ void loop() {
   float humValue = dht.readHumidity();
   float temValue = dht.readTemperature();
   //float l = analogRead(LIGHTSENSOR);
-  
+
   sumH = sumH - humValues[counterValues % 10];
   humValues[counterValues % 10] = humValue;
   sumH = sumH + humValue;
@@ -98,6 +99,8 @@ void loop() {
   temperValues[counterValues % 10] = temValue;
   sumT = sumT + temValue;
 
+  counterValues = counterValues + 1;
+
   if (counterValues < maxValues) {
     avgT = sumT / counterValues;
     avgH = sumH / counterValues;
@@ -105,9 +108,6 @@ void loop() {
     avgT = sumT / maxValues;
     avgH = sumH / maxValues;
   }
-
-  counterValues = counterValues + 1;
-
 
   Serial.println("Read Temperature: " + String(temValue));
   Serial.println("Average Temperature: " + String(avgT));
