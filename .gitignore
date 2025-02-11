@@ -1,0 +1,44 @@
+# Esclude il file di configurazione
+**/configuration.h
+
+# Esclude i file di compilazione e build
+*.elf
+*.hex
+*.bin
+*.eep
+*.map
+*.lst
+*.srec
+*.sym
+
+# Esclude le cartelle di build
+build/
+.arduino*
+
+# Esclude i file temporanei e IDE
+*.bak
+*.tmp
+*.dmp
+*.log
+*.swp
+*.swo
+
+# Esclude le cartelle di librerie compilate
+libraries/*/build/
+
+# Esclude file specifici di VS Code
+.vscode/
+
+# Esclude file specifici di Arduino IDE e PlatformIO
+*.ini
+*.pde
+*.cpp.projbuild
+.piolibdeps/
+.pioenvs/
+.pio/
+
+# Esclude file di sistema
+.DS_Store
+Thumbs.db
+.idea/
+*.iml
