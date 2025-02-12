@@ -29,7 +29,6 @@ void setup() {
 }
 
 void loop() {
-  int startTime = millis();
   if (WiFi.status() != WL_CONNECTED) {
     Serial.print('.');
     delay(1000);
@@ -38,8 +37,7 @@ void loop() {
     Serial.println("");
     timeClient.update();
     Serial.println(timeClient.getFormattedTime());
-    int endTime = millis();
-    Serial.println("time difference: " + String(countTime)));
+    Serial.println("time difference: " + String(countTime));
     countTime=0;
     delay(1000);
     
