@@ -1,0 +1,21 @@
+#ifndef TIME_MODULE_H
+#define TIME_MODULE_H
+
+#include <NTPClient.h>
+#include <WiFiUdp.h>
+#include <Arduino.h>
+
+class TimeModule {
+  public:
+    // Il costruttore richiede il fuso orario in secondi (es. 3600 per UTC+1)
+    TimeModule(long utcOffset);
+    void begin();
+    void updateTime();
+    String getFormattedTime();
+
+  private:
+    WiFiUDP ntpUDP;
+    NTPClient timeClient;
+};
+
+#endif
