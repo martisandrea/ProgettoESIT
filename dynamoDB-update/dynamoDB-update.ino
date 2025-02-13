@@ -5,15 +5,15 @@
 #include <time.h>
 #include <DHT.h>
 
-#include "errors.h" // Error handling functions
-#include "configuration.h" // Configuration data
+#include "errors.h"         // Error handling functions
+#include "configuration.h"  // Configuration data
 
 #define emptyString String()
-#define LIGHTSENSOR1 A0 // NodeMCU sensor pin definition
-const int MQTT_PORT = 8883; // Define MQTT port
+#define LIGHTSENSOR1 A0      // NodeMCU sensor pin definition
+const int MQTT_PORT = 8883;  // Define MQTT port
 // Define subscription and publication topics (on thing shadow)
-const char MQTT_SUB_TOPIC[] = "$aws/things/" THINGNAME "/shadow/update";
-const char MQTT_PUB_TOPIC[] = "$aws/things/" THINGNAME "/shadow/update";
+const char MQTT_SUB_TOPIC[] = "$aws/things/" THINGNAME "/shadow/update/sensors/data";
+const char MQTT_PUB_TOPIC[] = "$aws/things/" THINGNAME "/shadow/update/sensors/data";
 
 // Enable or disable summer-time
 #ifdef USE_SUMMER_TIME_DST
@@ -119,10 +119,10 @@ const long interval = 5000;
 
 // MQTT management of outgoing messages
 void sendData(void) {
-  DynamicJsonDocument jsonBuffer(JSON_OBJECT_SIZE(3) + 100);
-  JsonObject root = jsonBuffer.to<JsonObject>();
-  JsonObject state = root.createNestedObject("state");
-  JsonObject state_reported = state.createNestedObject("reported");
+  JsonDocument doc;
+  doc.to<JsonObject>();
+  JsonObject state = doc["state"].to<JsonObject>();
+  JsonObject state_reported = state["reported"].to<JsonObject>();
 
   float temValue = dht.readTemperature();
   float humValue = dht.readHumidity();
@@ -146,13 +146,14 @@ void sendData(void) {
   }
 
   state_reported["temperature"] = avgT;
+  state_reported["device_id"] = counterValues;
   state_reported["humidity"] = avgH;
 
-  Serial.printf("Sending [%s]: ", MQTT_PUB_TOPIC);
-  serializeJson(root, Serial);
-  Serial.println();
-  char shadow[measureJson(root) + 1];
-  serializeJson(root, shadow, sizeof(shadow));
+  //Serial.printf("Sending [%s]: ", MQTT_PUB_TOPIC);
+  serializeJson(doc, Serial);
+  //Serial.println();
+  char shadow[measureJson(doc) + 1];
+  serializeJson(doc, shadow, sizeof(shadow));
   if (!client.publish(MQTT_PUB_TOPIC, shadow, false, 0))
     lwMQTTErr(client.lastError());
 }
@@ -182,7 +183,7 @@ void loop() {
     verifyWiFiAndMQTT();
   } else {
     client.loop();
-    if (millis() - lastMs > 5000) {
+    if (millis() - lastMs > 2000) {
       lastMs = millis();
       sendData();
     }
