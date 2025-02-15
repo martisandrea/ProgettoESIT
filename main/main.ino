@@ -62,10 +62,15 @@ void loop() {
   // Aggiorna le letture dal sensore e dal modulo tempo
   sensor.readSensor();
   timeModule.updateTime();
+
+  Serial.print("Today is: ");
+  Serial.println(timeModule.getFormattedDate());
+  Serial.print("The time is: ");
+  Serial.println(timeModule.getFormattedTime());
   
   // Crea un payload in formato JSON con i dati del sensore e il timestamp
   String payload = "{";
-  payload += "\"time\":\"" + timeModule.getFormattedTime() + "\",";
+  //payload += "\"time\":\"" + dayTimeModule + "\",";
   payload += "\"temperature\":" + String(sensor.getTemperature()) + ",";
   payload += "\"humidity\":" + String(sensor.getHumidity());
   payload += "}";

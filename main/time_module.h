@@ -2,6 +2,7 @@
 #define TIME_MODULE_H
 
 #include <NTPClient.h>
+#include <time.h>
 #include <WiFiUdp.h>
 #include <Arduino.h>
 
@@ -12,6 +13,7 @@ class TimeModule {
     void begin();
     void updateTime();
     String getFormattedTime();
+    String getFormattedDate();
 
   private:
     WiFiUDP ntpUDP;
