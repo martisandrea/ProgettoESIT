@@ -63,16 +63,18 @@ void loop() {
   sensor.readSensor();
   timeModule.updateTime();
 
-  Serial.print("Today is: ");
-  Serial.println(timeModule.getFormattedDate());
-  Serial.print("The time is: ");
-  Serial.println(timeModule.getFormattedTime());
+  String date = timeModule.getFormattedDate();
+  date = date + " ";
+  date = date + timeModule.getFormattedTime();
+
+  String temperature = String(sensor.getTemperature());
+  String humidity = String(sensor.getHumidity());
   
   // Crea un payload in formato JSON con i dati del sensore e il timestamp
   String payload = "{";
-  //payload += "\"time\":\"" + dayTimeModule + "\",";
-  payload += "\"temperature\":" + String(sensor.getTemperature()) + ",";
-  payload += "\"humidity\":" + String(sensor.getHumidity());
+  payload += "\"date\":\"" + date + "\",";
+  payload += "\"temperature\":" + temperature + ",";
+  payload += "\"humidity\":" + humidity;
   payload += "}";
   
   // Pubblica i dati via MQTT
