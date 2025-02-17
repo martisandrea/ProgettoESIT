@@ -2,7 +2,7 @@
 #include <WiFiClientSecure.h>
 #include <MQTT.h>
 #include <ArduinoJson.h>
-#include <time.h>
+#include "time.h"
 #include <DHT.h>
 
 #include "errors.h"         // Error handling functions
@@ -10,10 +10,12 @@
 
 #define emptyString String()
 #define LIGHTSENSOR1 A0      // NodeMCU sensor pin definition
+#define DEVICE_ID "Sensor1" // Device ID
+
 const int MQTT_PORT = 8883;  // Define MQTT port
 // Define subscription and publication topics (on thing shadow)
-const char MQTT_SUB_TOPIC[] = "$aws/things/" THINGNAME "/shadow/update/sensors/data";
-const char MQTT_PUB_TOPIC[] = "$aws/things/" THINGNAME "/shadow/update/sensors/data";
+const char MQTT_SUB_TOPIC[] = "sensors/data";//"$aws/things/" THINGNAME "/shadow/update";
+const char MQTT_PUB_TOPIC[] = "sensors/data";//"$aws/things/" THINGNAME "/shadow/update";
 
 // Enable or disable summer-time
 #ifdef USE_SUMMER_TIME_DST
@@ -50,6 +52,7 @@ DHT dht(DHTPIN, DHTTYPE);
 unsigned long lastMs = 0;
 time_t now;
 time_t nowish = 1510592825;
+struct tm timeinfo;
 
 // Get time through Simple Network Time Protocol
 void NTPConnect(void) {
@@ -62,7 +65,6 @@ void NTPConnect(void) {
     now = time(nullptr);
   }
   Serial.println("done!");
-  struct tm timeinfo;
   gmtime_r(&now, &timeinfo);
   Serial.print("Current time: ");
   Serial.print(asctime(&timeinfo));
@@ -145,13 +147,17 @@ void sendData(void) {
     avgH = sumH / maxValues;
   }
 
+  gmtime_r(&now, &timeinfo);
+
+  state_reported["sensor_data_pk"] = String(strtok(asctime(&timeinfo), "\n")) + " " + DEVICE_ID; //TODO: aggiungere stringa con timestamp e DEVICE_ID
+  state_reported["device_id"] = DEVICE_ID;
+  state_reported["time_stamp"] = String(strtok(asctime(&timeinfo), "\n"));
   state_reported["temperature"] = avgT;
-  state_reported["device_id"] = counterValues;
   state_reported["humidity"] = avgH;
 
-  //Serial.printf("Sending [%s]: ", MQTT_PUB_TOPIC);
+  Serial.printf("Sending [%s]: ", MQTT_PUB_TOPIC);
   serializeJson(doc, Serial);
-  //Serial.println();
+  Serial.println();
   char shadow[measureJson(doc) + 1];
   serializeJson(doc, shadow, sizeof(shadow));
   if (!client.publish(MQTT_PUB_TOPIC, shadow, false, 0))
@@ -161,6 +167,13 @@ void sendData(void) {
 void setup() {
   Serial.begin(115200);
   delay(5000);
+
+  const char* ntpServer = "pool.ntp.org";
+  const char* timeZone = "CET+1CEST,M3.5.0/2,M10.5.0/3"; // Fuso orario per l'Italia
+  configTzTime(timeZone, ntpServer);
+
+  // AVVIO LA LETTURA DEL SENSORE DI UMIDITA' E TEMPERATURA
+  dht.begin();
   Serial.println();
   Serial.println();
   WiFi.hostname(THINGNAME);
@@ -173,8 +186,6 @@ void setup() {
   client.begin(MQTT_HOST, MQTT_PORT, net);
   client.onMessage(messageReceived);
   connectToMqtt();
-  // AVVIO LA LETTURA DEL SENSORE DI UMIDITA' E TEMPERATURA
-  dht.begin();
 }
 
 void loop() {
@@ -183,7 +194,7 @@ void loop() {
     verifyWiFiAndMQTT();
   } else {
     client.loop();
-    if (millis() - lastMs > 2000) {
+    if (millis() - lastMs > 5000) {
       lastMs = millis();
       sendData();
     }
