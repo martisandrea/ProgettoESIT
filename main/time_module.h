@@ -8,7 +8,7 @@
 
 class TimeModule {
   public:
-    // Il costruttore richiede il fuso orario in secondi (es. 3600 per UTC+1)
+    // timetable (ex. 3600 per UTC+1)
     TimeModule(long utcOffset);
     void begin();
     void updateTime();
