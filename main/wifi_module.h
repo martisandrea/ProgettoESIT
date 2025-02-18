@@ -2,6 +2,7 @@
 #define WIFI_MODULE_H
 
 #include <ESP8266WiFi.h>
+#include "configuration.h"
 
 class WiFiModule {
 public:

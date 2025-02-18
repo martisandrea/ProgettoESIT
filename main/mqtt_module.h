@@ -10,6 +10,7 @@ public:
     void begin();
     void loop();
     bool publish(const char* topic, const char* payload);
+    bool publish(const char* topic, const char* payload, bool retained, int qos);
     
 private:
     void reconnect();

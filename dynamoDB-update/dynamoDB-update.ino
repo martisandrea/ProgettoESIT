@@ -8,8 +8,7 @@
 #include "errors.h"         // Error handling functions
 #include "configuration.h"  // Configuration data
 
-#define emptyString String()
-#define LIGHTSENSOR1 A0      // NodeMCU sensor pin definition
+#define EMPTY_STRING String()
 #define DEVICE_ID "Sensor1" // Device ID
 
 const int MQTT_PORT = 8883;  // Define MQTT port
@@ -101,13 +100,13 @@ void connectToMqtt(bool nonBlocking = false) {
 
 // Wi-Fi connection
 void connectToWiFi(String init_str) {
-  if (init_str != emptyString)
+  if (init_str != EMPTY_STRING)
     Serial.print(init_str);
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print(".");
     delay(1000);
   }
-  if (init_str != emptyString)
+  if (init_str != EMPTY_STRING)
     Serial.println("ok!");
 }
 

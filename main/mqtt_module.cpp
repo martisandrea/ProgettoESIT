@@ -18,6 +18,10 @@ bool MQTTModule::publish(const char* topic, const char* payload) {
     return _mqttClient.publish(topic, payload);
 }
 
+bool MQTTModule::publish(const char* topic, const char* payload, bool retained, int qos) {
+    return _mqttClient.publish(topic, payload, retained, qos);
+}
+
 void MQTTModule::reconnect() {
     while (!_mqttClient.connected()) {
         Serial.print("Connessione a MQTT...");

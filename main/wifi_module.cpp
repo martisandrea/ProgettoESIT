@@ -8,6 +8,8 @@ void WiFiModule::begin() {
 }
 
 void WiFiModule::connect() {
+    WiFi.hostname(THINGNAME);
+    WiFi.mode(WIFI_STA);
     WiFi.begin(_ssid, _password);
     Serial.print("Connessione WiFi");
     while (WiFi.status() != WL_CONNECTED) {
