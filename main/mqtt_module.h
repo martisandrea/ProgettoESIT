@@ -2,11 +2,14 @@
 #define MQTT_MODULE_H
 
 #include <PubSubClient.h>
+#include <MQTT.h>
 #include <ESP8266WiFi.h>  // Necessario per WiFiClient
+#include <WiFiClientSecure.h>
+#include "configuration.h"
 
 class MQTTModule {
 public:
-    MQTTModule(WiFiClient& client, const char* mqttServer, int mqttPort, const char* clientId);
+    MQTTModule(MQTTClient& client, const char* mqttHost, int mqttPort, WiFiClientSecure net);
     void begin();
     void loop();
     bool publish(const char* topic, const char* payload);
@@ -14,10 +17,10 @@ public:
     
 private:
     void reconnect();
-    PubSubClient _mqttClient;
-    const char* _mqttServer;
+    MQTTClient _mqttClient;
+    const char* _mqttHost;
     int _mqttPort;
-    const char* _clientId;
+    WiFiClientSecure _net;
 };
 
 #endif

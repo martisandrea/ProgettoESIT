@@ -16,8 +16,9 @@ const char* MQTT_TOPIC = "sensor/data";
 const int TIME_TABLE = 3600;
 
 WiFiModule wifiModule(ssid, password);
-WiFiClient espClient;  // Necessario per il client MQTT
-MQTTModule mqttModule(espClient, MQTT_HOST, mqttPort, THINGNAME);
+MQTTClient mqttClient;
+WiFiClientSecure net;
+MQTTModule mqttModule(mqttClient, MQTT_HOST, MQTT_PORT, net);
 SensorModule sensor;
 TimeModule timeModule(TIME_TABLE);
 
@@ -51,7 +52,7 @@ void sendData(void) {
   Serial.println();
   char shadow[measureJson(doc) + 1];
   serializeJson(doc, shadow, sizeof(shadow));
-  if (!mqttModule.publish(MQTT_TOPIC, shadow, false, 0))
+  if (!mqttModule.publish(MQTT_TOPIC, "prova", false, 0))
     lwMQTTErr(client.lastError());
 }
 
