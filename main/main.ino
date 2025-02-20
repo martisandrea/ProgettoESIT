@@ -1,31 +1,39 @@
+#include <ArduinoJson.h>
+#include <WiFiClientSecure.h>
+#include "configuration.h"  // Configuration data
+
 #include "wifi_module.h"
 #include "mqtt_module.h"
 #include "sensor_module.h"
 #include "time_module.h"
 
-#include "errors.h"         // Error handling functions
-#include "configuration.h"  // Configuration data
-
 #define EMPTY_STRING String()
 #define DEVICE_ID "Sensor1"
 
-// MQTT datas
+// MQTT data
 const int MQTT_PORT = 1883;
-//const char* CLIENT_ID = "NodeMCU_1234";
 const char* MQTT_TOPIC = "sensor/data";
+// TimeModule data
 const int TIME_TABLE = 3600;
 
-WiFiModule wifiModule(ssid, password);
-MQTTClient mqttClient;
+WiFiModule wifiModule(ssid, password, THINGNAME);
+
 WiFiClientSecure net;
-MQTTModule mqttModule(mqttClient, MQTT_HOST, MQTT_PORT, net);
+
+BearSSL::X509List cert(cacert);
+BearSSL::X509List client_crt(client_cert);
+BearSSL::PrivateKey key(privkey);
+MQTTClient mqttClient;
+MQTTModule mqttModule(mqttClient, MQTT_HOST, MQTT_PORT, THINGNAME, MQTT_TOPIC);
+
 SensorModule sensor;
+
 TimeModule timeModule(TIME_TABLE);
 
 unsigned long lastMsg = 0;
 
 // MQTT management of outgoing messages
-void sendData(void) {
+void sendData() {
   JsonDocument doc;
   doc.to<JsonObject>();
   JsonObject state = doc["state"].to<JsonObject>();
@@ -53,16 +61,19 @@ void sendData(void) {
   char shadow[measureJson(doc) + 1];
   serializeJson(doc, shadow, sizeof(shadow));
   if (!mqttModule.publish(MQTT_TOPIC, "prova", false, 0))
-    lwMQTTErr(client.lastError());
+    lwMQTTErr(mqttModule.lastError());
 }
 
 
 void setup() {
   Serial.begin(115200);
 
+  net.setTrustAnchors(&cert);
+  net.setClientRSACert(&client_crt, &key);
+
   // Inizializzazione dei moduli
   wifiModule.begin();
-  mqttModule.begin();
+  mqttModule.begin(net);
   sensor.begin();
   timeModule.begin();
 }

@@ -1,38 +1,35 @@
 #include "mqtt_module.h"
 
-BearSSL::X509List cert(cacert);
-BearSSL::X509List client_crt(client_cert);
-BearSSL::PrivateKey key(privkey);
+MQTTModule::MQTTModule(MQTTClient& client, const char* mqttHost, int mqttPort, const char* clientId, const char* mqttTopic)
+  : _mqttClient(client), _mqttHost(mqttHost), _mqttPort(mqttPort), _clientId(clientId), _mqttTopic(mqttTopic) {}
 
-MQTTModule::MQTTModule(MQTTClient& client, const char* mqttHost, int mqttPort, WiFiClientSecure net)
-    : _mqttClient(client), _mqttHost(mqttHost), _mqttPort(mqttPort), _net(net) {}
-
-void MQTTModule::begin() {
-    _net.setTrustAnchors(&cert);
-    _net.setClientRSACert(&client_crt, &key);
-    _mqttClient.begin(_mqttHost, _mqttPort, _net);
+void MQTTModule::begin(WiFiClientSecure net) {
+  _net = net;
+  _mqttClient.begin(_mqttHost, _mqttPort, net);
+  connect();
 }
 
 void MQTTModule::loop() {
-    if (!_mqttClient.connected()) {
-        reconnect();
-    }
-    _mqttClient.loop();
+  if (!_mqttClient.connected()) {
+    connect();
+  }
+  _mqttClient.loop();
 }
 
 bool MQTTModule::publish(const char* topic, const char* payload) {
-    return _mqttClient.publish(topic, payload);
+  return _mqttClient.publish(topic, payload);
 }
 
 bool MQTTModule::publish(const char* topic, const char* payload, bool retained, int qos) {
-    return _mqttClient.publish(topic, payload, retained, qos);
+  return _mqttClient.publish(topic, payload, retained, qos);
 }
 
-void MQTTModule::reconnect(bool nonBlocking = false) {
-    while (!_mqttClient.connected()) {
-    if (_mqttClient.connect(THINGNAME)) {
+void MQTTModule::connect(bool nonBlocking) {
+  while (!_mqttClient.connected()) {
+    Serial.println("TEST CONNESSIONE " + String(_clientId) + " " + String(_mqttClient.connect(_clientId)));
+    if (_mqttClient.connect(_clientId)) {
       Serial.println("connected!");
-      if (!_mqttClient.subscribe(MQTT_SUB_TOPIC))
+      if (!_mqttClient.subscribe(_mqttTopic))
         lwMQTTErr(_mqttClient.lastError());
     } else {
       Serial.print("SSL Error Code: ");
@@ -46,4 +43,9 @@ void MQTTModule::reconnect(bool nonBlocking = false) {
         Serial.println(" <");
       }
     }
+  }
+}
+
+lwmqtt_err_t MQTTModule::lastError() {
+  return _mqttClient.lastError();
 }

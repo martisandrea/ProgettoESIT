@@ -1,14 +1,14 @@
 #include "wifi_module.h"
 
-WiFiModule::WiFiModule(const char* ssid, const char* password)
-    : _ssid(ssid), _password(password) {}
+WiFiModule::WiFiModule(const char* ssid, const char* password, const char* client_id)
+    : _ssid(ssid), _password(password), _client_id(client_id) {}
 
 void WiFiModule::begin() {
     connect();
 }
 
 void WiFiModule::connect() {
-    WiFi.hostname(THINGNAME);
+    WiFi.hostname(_client_id);
     WiFi.mode(WIFI_STA);
     WiFi.begin(_ssid, _password);
     Serial.print("Connessione WiFi");
