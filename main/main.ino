@@ -41,6 +41,20 @@ void sendData(void) {
   float avgT = sensor.getTemperature();
   float avgH = sensor.getHumidity();
 
+  // se la temperatura ha un valore anomalo avviso tramite bot
+  if(avgT > 30) {
+    Serial.println("Temperature too high!");
+    // Send alert to MQTT topic
+    JsonObject alert = doc["alert"].to<JsonObject>();
+    alert["temperature"] = avgT;
+    alert["humidity"] = avgH;
+    alert["device_id"] = DEVICE_ID;
+    alert["time_stamp"] = date_time;
+    char alertMessage[measureJson(doc) + 1];
+    serializeJson(doc, alertMessage, sizeof(alertMessage));
+    if (!mqttModule.publish("sensor/alert", alertMessage, false, 0))
+      lwMQTTErr(client.lastError());
+  }
   state_reported["sensor_data_pk"] = date_time + " " + DEVICE_ID;
   state_reported["device_id"] = DEVICE_ID;
   state_reported["time_stamp"] = date_time;
