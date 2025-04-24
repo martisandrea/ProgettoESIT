@@ -1,20 +1,22 @@
-#include <ESP8266WiFi.h>
 #include <WiFiClientSecure.h>
 #include <MQTT.h>
 #include <ArduinoJson.h>
-#include "time.h"
-#include <DHT.h>
 
+#include "time_module.h"
+#include "sensor_module.h"
+#include "wifi_module.h"
 #include "errors.h"         // Error handling functions
 #include "configuration.h"  // Configuration data
 
 #define EMPTY_STRING String()
-#define DEVICE_ID "Sensor1" // Device ID
+#define DEVICE_ID "S1"  // Device ID
 
 const int MQTT_PORT = 8883;  // Define MQTT port
 // Define subscription and publication topics (on thing shadow)
-const char MQTT_SUB_TOPIC[] = "sensors/data";//"$aws/things/" THINGNAME "/shadow/update";
-const char MQTT_PUB_TOPIC[] = "sensors/data";//"$aws/things/" THINGNAME "/shadow/update";
+const char MQTT_SUB_TOPIC[] = "sensors/data";  //"$aws/things/" THINGNAME "/shadow/update";
+const char MQTT_PUB_TOPIC[] = "sensors/data";  //"$aws/things/" THINGNAME "/shadow/update";
+// TimeModule data
+const int TIME_TABLE = 3600;
 
 // Enable or disable summer-time
 #ifdef USE_SUMMER_TIME_DST
@@ -22,6 +24,10 @@ uint8_t DST = 1;
 #else
 uint8_t DST = 0;
 #endif
+
+WiFiModule wifiModule(ssid, password, THINGNAME);
+SensorModule sensor;
+TimeModule timeModule(TIME_TABLE);
 
 // Create Transport Layer Security (TLS) connection
 WiFiClientSecure net;
@@ -32,26 +38,9 @@ BearSSL::PrivateKey key(privkey);
 // Initialize MQTT client
 MQTTClient client;
 
-// VARIABILI PER IL CALCOLO DEI VALORI MEDI
-const int maxValues = 10;
-float temperValues[maxValues];
-float humValues[maxValues];
-int counterValues = 0;
-
-float sumT = 0;
-float avgT = 0;
-float sumH = 0;
-float avgH = 0;
-
-// DHT11 Humidity and Temperature Sensor
-#define DHTPIN D4
-#define DHTTYPE DHT11
-DHT dht(DHTPIN, DHTTYPE);
-
-unsigned long lastMs = 0;
+unsigned long lastMsg = 0;
 time_t now;
 time_t nowish = 1510592825;
-struct tm timeinfo;
 
 // Get time through Simple Network Time Protocol
 void NTPConnect(void) {
@@ -64,9 +53,10 @@ void NTPConnect(void) {
     now = time(nullptr);
   }
   Serial.println("done!");
-  gmtime_r(&now, &timeinfo);
   Serial.print("Current time: ");
-  Serial.print(asctime(&timeinfo));
+  timeModule.updateTime();
+  String date_time = timeModule.getFormattedDate() + " " + timeModule.getFormattedTime();
+  Serial.println(date_time);
 }
 
 // MQTT management of incoming messages
@@ -110,10 +100,10 @@ void connectToWiFi(String init_str) {
     Serial.println("ok!");
 }
 
-void verifyWiFiAndMQTT(void) {
+/* void verifyWiFiAndMQTT(void) {
   connectToWiFi("Checking WiFi");
   connectToMqtt();
-}
+} */
 
 unsigned long previousMillis = 0;
 const long interval = 5000;
@@ -125,32 +115,14 @@ void sendData(void) {
   JsonObject state = doc["state"].to<JsonObject>();
   JsonObject state_reported = state["reported"].to<JsonObject>();
 
-  float temValue = dht.readTemperature();
-  float humValue = dht.readHumidity();
+  timeModule.updateTime();
+  String date_time = timeModule.getFormattedDate() + " " + timeModule.getFormattedTime();
 
-  sumH = sumH - humValues[counterValues % 10];
-  humValues[counterValues % 10] = humValue;
-  sumH = sumH + humValue;
+  sensor.readSensor();
+  float avgT = round(sensor.getTemperature() * 100) / 100;
+  float avgH = round(sensor.getHumidity() * 100) / 100;
 
-  sumT = sumT - temperValues[counterValues % 10];
-  temperValues[counterValues % 10] = temValue;
-  sumT = sumT + temValue;
-
-  counterValues = counterValues + 1;
-
-  if (counterValues < maxValues) {
-    avgT = sumT / counterValues;
-    avgH = sumH / counterValues;
-  } else {
-    avgT = sumT / maxValues;
-    avgH = sumH / maxValues;
-  }
-
-  gmtime_r(&now, &timeinfo);
-
-  state_reported["sensor_data_pk"] = String(strtok(asctime(&timeinfo), "\n")) + " " + DEVICE_ID; //TODO: aggiungere stringa con timestamp e DEVICE_ID
-  state_reported["device_id"] = DEVICE_ID;
-  state_reported["time_stamp"] = String(strtok(asctime(&timeinfo), "\n"));
+  state_reported["sensor_data_pk"] = date_time + "-" + DEVICE_ID;
   state_reported["temperature"] = avgT;
   state_reported["humidity"] = avgH;
 
@@ -167,18 +139,12 @@ void setup() {
   Serial.begin(115200);
   delay(5000);
 
-  const char* ntpServer = "pool.ntp.org";
-  const char* timeZone = "CET+1CEST,M3.5.0/2,M10.5.0/3"; // Fuso orario per l'Italia
-  configTzTime(timeZone, ntpServer);
-
-  // AVVIO LA LETTURA DEL SENSORE DI UMIDITA' E TEMPERATURA
-  dht.begin();
+  sensor.begin();
+  timeModule.begin();
   Serial.println();
   Serial.println();
-  WiFi.hostname(THINGNAME);
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, pass);
-  connectToWiFi(String("Trying to connect with SSID: ") + String(ssid));
+  Serial.println("Trying to connect with SSID: " + String(ssid));
+  wifiModule.begin();
   NTPConnect();
   net.setTrustAnchors(&cert);
   net.setClientRSACert(&client_crt, &key);
@@ -190,11 +156,15 @@ void setup() {
 void loop() {
   now = time(nullptr);
   if (!client.connected()) {
-    verifyWiFiAndMQTT();
+    while (wifiModule.status() != WL_CONNECTED) {
+      Serial.print(".");
+      delay(1000);
+    }
+    connectToMqtt();
   } else {
     client.loop();
-    if (millis() - lastMs > 5000) {
-      lastMs = millis();
+    if (millis() - lastMsg > 5000) {
+      lastMsg = millis();
       sendData();
     }
   }
