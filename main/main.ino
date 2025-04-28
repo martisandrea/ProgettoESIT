@@ -137,10 +137,12 @@ void sendData() {
       numAlarms++;
       // Send alert to MQTT topic
       JsonObject alert = doc["alert"].to<JsonObject>();
+      alert["alert_pk"] = date_time + "-" + DEVICE_ID;
       alert["temperature"] = avgT;
       alert["humidity"] = avgH;
-      alert["device_id"] = DEVICE_ID;
-      alert["time_stamp"] = date_time;
+      alert["state"] = "active";
+      //alert["device_id"] = DEVICE_ID;
+      //alert["time_stamp"] = date_time;
       char alertMessage[measureJson(doc) + 1];
       serializeJson(doc, alertMessage, sizeof(alertMessage));
       if (!client.publish(MQTT_ALERTS_TOPIC, alertMessage, false, 0))
