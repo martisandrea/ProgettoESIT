@@ -54,6 +54,9 @@ int numAlarms = 0;
 float avgT = 0;
 float avgH = 0;
 
+float temperatureThreshold = 50;  // Temperature threshold for critical alert
+float humidityThreshold = 25;     // Humidity threshold for critical alert
+
 // Get time through Simple Network Time Protocol
 void NTPConnect(void) {
   Serial.print("Setting time using SNTP");
@@ -130,7 +133,7 @@ void sendData() {
   avgH = round(sensor.getHumidity() * 100) / 100;
 
   // se la temperatura ha un valore anomalo avviso tramite bot
-  if (avgT > 50 && avgH < 25) {
+  if (avgT > temperatureThreshold && avgH < humidityThreshold) {
     if (millis() - lastAlarm == 300000) {
       Serial.println("Critical Readings!");
       lastAlarm = millis();
@@ -217,7 +220,7 @@ void loop() {
       lcd.setCursor(0, 0);
       lcd.print("Non connesso");
       sensor.readSensor();
-      if (avgT > 50 && avgH < 25) {
+      if (avgT > temperatureThreshold && avgH < humidityThreshold) {
         lcd.setCursor(0, 1);
         scrollText(1, "LETTURA CRITICA NON INVIATA", 300, lcdColumns);
       } else {
