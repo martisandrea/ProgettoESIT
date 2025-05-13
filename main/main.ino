@@ -221,6 +221,7 @@ void loop() {
       lcd.print("Non connesso");
       sensor.readSensor();
       if (avgT > temperatureThreshold && avgH < humidityThreshold) {
+        // TODO: aggiornare il sistema per inviare allarme quando si connette di nuovo
         lcd.setCursor(0, 1);
         scrollText(1, "LETTURA CRITICA NON INVIATA", 300, lcdColumns);
       } else {

@@ -1,6 +1,3 @@
-# Esclude il file di configurazione
-**/configuration.h
-
 # Esclude i file di compilazione e build
 *.elf
 *.hex

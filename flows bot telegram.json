@@ -1,0 +1,203 @@
+[
+    {
+        "id": "42133d9f8846f24b",
+        "type": "telegram sender",
+        "z": "1a14ad9ce0ddf9d4",
+        "name": "Esit Bot",
+        "bot": "4d52bac0faba5b1c",
+        "haserroroutput": true,
+        "outputs": 2,
+        "x": 700,
+        "y": 260,
+        "wires": [
+            [
+                "73392a7d7ccc9cdb"
+            ],
+            [
+                "66d001c5fa7b70be"
+            ]
+        ]
+    },
+    {
+        "id": "69d5e15fbffbb94b",
+        "type": "function",
+        "z": "1a14ad9ce0ddf9d4",
+        "name": "Message",
+        "func": "msg.payload = {\n chatId: msg.id,\n type: 'message',\n content: \"Attenzione! Possibile incendio in corso!\"\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 480,
+        "y": 260,
+        "wires": [
+            [
+                "42133d9f8846f24b"
+            ]
+        ]
+    },
+    {
+        "id": "3032a7d506935bda",
+        "type": "inject",
+        "z": "1a14ad9ce0ddf9d4",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            },
+            {
+                "p": "id",
+                "v": "chatid",
+                "vt": "env"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 220,
+        "y": 300,
+        "wires": [
+            [
+                "69d5e15fbffbb94b"
+            ]
+        ]
+    },
+    {
+        "id": "73392a7d7ccc9cdb",
+        "type": "debug",
+        "z": "1a14ad9ce0ddf9d4",
+        "name": "Message",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 960,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "66d001c5fa7b70be",
+        "type": "debug",
+        "z": "1a14ad9ce0ddf9d4",
+        "name": "Errors",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 950,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "9a1bd3b0372c9240",
+        "type": "mqtt in",
+        "z": "1a14ad9ce0ddf9d4",
+        "name": "Humidity Sensor",
+        "topic": "sensor/alert",
+        "qos": "0",
+        "datatype": "auto-detect",
+        "broker": "8e57a94327bff099",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 200,
+        "y": 220,
+        "wires": [
+            [
+                "69d5e15fbffbb94b"
+            ]
+        ]
+    },
+    {
+        "id": "4d52bac0faba5b1c",
+        "type": "telegram bot",
+        "botname": "MyEsitTestBot",
+        "usernames": "",
+        "chatids": "${chatid}",
+        "baseapiurl": "",
+        "testenvironment": false,
+        "updatemode": "polling",
+        "addressfamily": "",
+        "pollinterval": "300",
+        "usesocks": false,
+        "sockshost": "",
+        "socksprotocol": "socks5",
+        "socksport": "6667",
+        "socksusername": "anonymous",
+        "sockspassword": "",
+        "bothost": "",
+        "botpath": "",
+        "localbotport": "8443",
+        "publicbotport": "8443",
+        "privatekey": "",
+        "certificate": "",
+        "useselfsignedcertificate": false,
+        "sslterminated": false,
+        "verboselogging": false
+    },
+    {
+        "id": "8e57a94327bff099",
+        "type": "mqtt-broker",
+        "name": "AWS_IOT",
+        "broker": "a38y4cqpqfo89o-ats.iot.eu-north-1.amazonaws.com",
+        "port": "8883",
+        "tls": "ef3a0c0bc7acd0ea",
+        "clientid": "asset1",
+        "autoConnect": true,
+        "usetls": true,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": false,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "ef3a0c0bc7acd0ea",
+        "type": "tls-config",
+        "name": "asset1certs",
+        "cert": "",
+        "key": "",
+        "ca": "",
+        "certname": "46ade149f1b79e211534e5523b1efa2844c3779a56f422a8ad4b3aa5844b7dd4-certificate.pem.crt",
+        "keyname": "46ade149f1b79e211534e5523b1efa2844c3779a56f422a8ad4b3aa5844b7dd4-private.pem.key",
+        "caname": "AmazonRootCA1.pem",
+        "servername": "",
+        "verifyservercert": false,
+        "alpnprotocol": ""
+    }
+]
