@@ -110,7 +110,7 @@
         "id": "9a1bd3b0372c9240",
         "type": "mqtt in",
         "z": "1a14ad9ce0ddf9d4",
-        "name": "Humidity Sensor",
+        "name": "Sensor",
         "topic": "sensor/alert",
         "qos": "0",
         "datatype": "auto-detect",
